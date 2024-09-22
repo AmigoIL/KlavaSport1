@@ -1,17 +1,26 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using System.Collections; // Добавь это пространство имен для использования IEnumerator
+using System.Collections;
 
 public class MusicManager : MonoBehaviour
 {
     public AudioSource musicSource; // Источник музыки
     public Slider volumeSlider; // Ползунок для управления громкостью
     public Button muteButton; // Кнопка для выключения музыки
-    public float fadeDuration = 1.5f; // Длительность затухания при смене сцены
+    public float fadeDuration = 1.5f; // Длительность затухания
 
     private bool isMuted = false; // Флаг для отслеживания состояния звука
     private float savedVolume; // Для хранения предыдущей громкости до выключения
+
+    private void Awake()
+    {
+        // Назначаем текущий объект Singleton (если нужно сохранить один экземпляр на сцене)
+        if (FindObjectsOfType<MusicManager>().Length > 1)
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Start()
     {
@@ -22,10 +31,14 @@ public class MusicManager : MonoBehaviour
             return;
         }
 
+        // Загрузка сохранённой громкости или установка стандартного значения
+        float savedVolume = PlayerPrefs.GetFloat("MusicVolume", 0.5f);
+        musicSource.volume = savedVolume;
+
         // Установка начальной громкости ползунка
         if (volumeSlider != null)
         {
-            volumeSlider.value = musicSource.volume;
+            volumeSlider.value = savedVolume;
             volumeSlider.onValueChanged.AddListener(SetVolume);
         }
 
@@ -35,8 +48,9 @@ public class MusicManager : MonoBehaviour
             muteButton.onClick.AddListener(MuteUnmute);
         }
 
-        // Подписываемся на событие смены сцены
+        // Подписываемся на событие смены сцены для плавного затухания
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
     }
 
     // Метод для установки громкости
@@ -45,6 +59,8 @@ public class MusicManager : MonoBehaviour
         if (!isMuted)
         {
             musicSource.volume = volume;
+            PlayerPrefs.SetFloat("MusicVolume", volume); // Сохранение громкости
+            PlayerPrefs.Save();
         }
     }
 
@@ -55,6 +71,7 @@ public class MusicManager : MonoBehaviour
         {
             // Включить звук
             musicSource.volume = savedVolume;
+            PlayerPrefs.SetFloat("MusicVolume", savedVolume); // Сохранение громкости
             isMuted = false;
         }
         else
@@ -64,9 +81,11 @@ public class MusicManager : MonoBehaviour
             musicSource.volume = 0;
             isMuted = true;
         }
+
+        PlayerPrefs.Save();
     }
 
-    // Метод для постепенного затухания музыки
+    // Плавное затухание музыки перед сменой сцены
     private IEnumerator FadeOutMusic()
     {
         float startVolume = musicSource.volume;
@@ -80,15 +99,31 @@ public class MusicManager : MonoBehaviour
         musicSource.volume = 0;
     }
 
-    // Событие смены сцены
+    // Метод, который будет вызываться при выгрузке сцены
+    private void OnSceneUnloaded(Scene current)
+    {
+        // Запуск корутины плавного затухания
+        StartCoroutine(FadeOutMusic());
+    }
+
+    // Метод, который будет вызываться при загрузке новой сцены
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        StartCoroutine(FadeOutMusic());
+        // Восстанавливаем громкость после загрузки новой сцены
+        float savedVolume = PlayerPrefs.GetFloat("MusicVolume", 0.5f);
+        musicSource.volume = isMuted ? 0 : savedVolume;
+
+        // Устанавливаем значение ползунка на сохранённое значение, если ползунок существует
+        if (volumeSlider != null)
+        {
+            volumeSlider.value = savedVolume;
+        }
     }
 
     private void OnDestroy()
     {
-        // Отписываемся от события при уничтожении объекта
+        // Отписываемся от событий при уничтожении объекта
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
     }
 }

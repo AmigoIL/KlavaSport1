@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // Для использования SceneManager
 
 public class PanelToggle : MonoBehaviour
 {
@@ -8,6 +9,12 @@ public class PanelToggle : MonoBehaviour
 
     // Кнопка, по нажатию на которую будет происходить переключение панели
     public Button toggleButton;
+
+    // Источник звука для воспроизведения
+    public AudioSource buttonAudioSource;
+
+    // Звук, который будет воспроизводиться при переходе на сцену
+    public AudioClip buttonSoundClip;
 
     private void Start()
     {
@@ -24,8 +31,17 @@ public class PanelToggle : MonoBehaviour
             return;
         }
 
+        if (buttonAudioSource == null)
+        {
+            Debug.LogError("Источник звука не назначен в инспекторе.");
+            return;
+        }
+
         // Назначаем метод TogglePanel() для события нажатия кнопки
         toggleButton.onClick.AddListener(TogglePanel);
+
+        // Подписываемся на событие смены сцены
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void Update()
@@ -44,7 +60,36 @@ public class PanelToggle : MonoBehaviour
     // Метод для включения/выключения панели по кнопке
     public void TogglePanel()
     {
+        // Воспроизводим звук при нажатии кнопки
+        PlayButtonSound();
+
         // Переключение видимости панели
         panel.SetActive(!panel.activeSelf);
+    }
+
+    // Метод для воспроизведения звука кнопки
+    private void PlayButtonSound()
+    {
+        if (buttonAudioSource != null && buttonSoundClip != null)
+        {
+            buttonAudioSource.PlayOneShot(buttonSoundClip);
+        }
+        else
+        {
+            Debug.LogError("Источник звука или клип не назначены в инспекторе.");
+        }
+    }
+
+    // Метод, который вызывается при загрузке новой сцены
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Воспроизводим звук при загрузке новой сцены
+        PlayButtonSound();
+    }
+
+    private void OnDestroy()
+    {
+        // Отписываемся от события при уничтожении объекта
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 }

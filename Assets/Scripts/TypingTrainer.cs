@@ -14,6 +14,7 @@ public class TypingTrainer : MonoBehaviour
     private string currentInput = ""; // Текущий ввод игрока
     private bool isWrong = false; // Ошибка ввода
     private float wordTimer; // Таймер на ввод слова
+    private bool isPaused = false; // Флаг для проверки паузы
 
     void Start()
     {
@@ -22,18 +23,27 @@ public class TypingTrainer : MonoBehaviour
 
     void Update()
     {
-        if (!isWrong)
+        if (!isPaused) // Проверка на паузу
         {
-            wordTimer -= Time.deltaTime;
-            if (wordTimer <= 0)
+            if (!isWrong)
             {
-                ResetWord(); // Время на ввод слова истекло
-            }
-            else
-            {
-                CheckInput();
+                wordTimer -= Time.deltaTime;
+                if (wordTimer <= 0)
+                {
+                    ResetWord(); // Время на ввод слова истекло
+                }
+                else
+                {
+                    CheckInput();
+                }
             }
         }
+    }
+
+    // Метод для установки паузы
+    public void SetPause(bool pause)
+    {
+        isPaused = pause;
     }
 
     // Установка следующего слова

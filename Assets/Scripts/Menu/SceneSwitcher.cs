@@ -7,6 +7,10 @@ public class SceneSwitcher : MonoBehaviour
     {
         SceneManager.LoadScene("SampleScene"); 
     }
+    public void LoadMenuScene2()
+    {
+        SceneManager.LoadScene("Menu");
+    }
 
     public void QuitGame()
     {
