@@ -4,33 +4,37 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System;
-using Random=UnityEngine.Random;
+using Random = UnityEngine.Random;
+
 public class TypingTrainer : MonoBehaviour
 {
-    public TextMeshProUGUI wordText; // Объект для отображения слова
-    public RectTransform wordPanel; // Панель для автоматического увеличения
-    public string[] wordsToType; // Массив слов для последовательности
-    public float delayBeforeNextWord = 1.5f; // Задержка перед следующим словом
-    public float timeToTypeWord = 10f; // Время на ввод одного слова
-    private int currentWordIndex = 0; // Индекс текущего слова
-    private string currentWord; // Текущее слово для ввода
-    private string currentInput = ""; // Текущий ввод игрока
-    private bool isWrong = false; // Ошибка ввода
+    public TextMeshProUGUI wordText; // Object to display the word
+    public RectTransform wordPanel; // Panel for automatic resizing
+    public string[] wordsToType; // Array of words for the sequence
+    public float delayBeforeNextWord = 1.5f; // Delay before the next word
+    public float timeToTypeWord = 10f; // Time to type one word
+    private int currentWordIndex = 0; // Index of the current word
+    private string currentWord; // Current word to type
+    private string currentInput = ""; // Current player input
+    private bool isWrong = false; // Input error
     public TMP_Text Timer;
-    public float timeStart = 10f; //со скольки начать отсчёт
-    private float wordTimer; // Таймер на ввод слова
+    public float timeStart = 10f; // Time to start the countdown
+    private float wordTimer; // Timer for typing the word
     public GameObject word;
     public GameObject timeup;
+    public GameObject victoryMessage; // UI object for the victory message
 
     void Start()
     {
-        Timer.text = timeStart.ToString ();
-        SetNextWord(); // Задаем первое слово
+        Timer.text = timeStart.ToString();
+        SetNextWord(); // Set the first word
+        victoryMessage.SetActive(false); // Ensure victory message is hidden at start
     }
 
     void Update()
     {
-        if (timeStart > 0){
+        if (timeStart > 0)
+        {
             timeStart -= Time.deltaTime;
             Timer.text = Math.Round(timeStart).ToString();
         }
@@ -38,23 +42,23 @@ public class TypingTrainer : MonoBehaviour
         {
             word.SetActive(false);
             timeup.SetActive(true);
-        } 
+        }
 
-       if (!isWrong)
+        if (!isWrong)
         {
             wordTimer -= Time.deltaTime;
             if (wordTimer <= 0)
             {
-                ResetWord(); // Время на ввод слова истекло
+                ResetWord(); // Time to type the word has expired
             }
             else
             {
                 CheckInput();
-           }
+            }
         }
     }
 
-    // Установка следующего слова
+    // Set the next word
     void SetNextWord()
     {
         if (currentWordIndex < wordsToType.Length)
@@ -62,25 +66,24 @@ public class TypingTrainer : MonoBehaviour
             currentWord = wordsToType[currentWordIndex];
             currentWordIndex++;
             DisplayWord();
-            wordTimer = timeToTypeWord; // Сброс таймера для нового слова
+            wordTimer = timeToTypeWord; // Reset timer for the new word
         }
         else
         {
-            Debug.Log("Все слова введены!");
-            wordText.text = "";
+            DisplayVictoryMessage(); // Display victory message if all words are typed
         }
     }
 
-    // Отображение слова и настройка панели
+    // Display the word and adjust the panel
     void DisplayWord()
     {
         wordText.text = currentWord;
-        wordText.color = Color.white; // Белый цвет по умолчанию
-        currentInput = ""; // Сбрасываем текущий ввод
-        AdjustPanelSize(); // Автоматическое изменение размера панели
+        wordText.color = Color.white; // Default color
+        currentInput = ""; // Reset current input
+        AdjustPanelSize(); // Automatically resize the panel
     }
 
-    // Проверка ввода
+    // Check the input
     void CheckInput()
     {
         foreach (char c in Input.inputString)
@@ -89,18 +92,18 @@ public class TypingTrainer : MonoBehaviour
             {
                 currentInput += c;
                 UpdateWordDisplay();
-                AnimateLetter(currentInput.Length - 1); // Увеличиваем только текущую букву
+                AnimateLetter(currentInput.Length - 1); // Increase only the current letter
             }
             else
             {
-                StartCoroutine(ShakeWord()); // Ошибка — трясем слово
+                StartCoroutine(ShakeWord()); // Error — shake the word
                 ResetWord();
                 return;
             }
         }
     }
 
-    // Обновление отображения слова
+    // Update the word display
     void UpdateWordDisplay()
     {
         string newText = "";
@@ -108,7 +111,7 @@ public class TypingTrainer : MonoBehaviour
         {
             if (i < currentInput.Length)
             {
-                newText += $"<color=#80C080>{currentWord[i]}</color>"; // Менее яркий зеленый цвет
+                newText += $"<color=#80C080>{currentWord[i]}</color>"; // Less bright green color
             }
             else
             {
@@ -117,21 +120,21 @@ public class TypingTrainer : MonoBehaviour
         }
         wordText.text = newText;
 
-        // Если слово полностью введено
+        // If the word is fully typed
         if (currentInput == currentWord)
         {
-            StartCoroutine(ShakeWord()); // Успешное завершение — трясем слово
+            StartCoroutine(ShakeWord()); // Successful completion — shake the word
             StartCoroutine(RemoveWordAfterDelay());
         }
     }
 
-    // Анимация увеличения только текущей буквы
+    // Animate the increase of the current letter
     void AnimateLetter(int index)
     {
         StartCoroutine(ShakeLetter(index));
     }
 
-    // Корутина для увеличения и уменьшения конкретной буквы
+    // Coroutine to enlarge and shrink a specific letter
     IEnumerator ShakeLetter(int index)
     {
         string newText = "";
@@ -155,7 +158,7 @@ public class TypingTrainer : MonoBehaviour
         UpdateWordDisplay();
     }
 
-    // Корутина для тряски всего слова
+    // Coroutine to shake the entire word
     IEnumerator ShakeWord()
     {
         Vector3 originalPosition = wordText.transform.localPosition;
@@ -168,37 +171,46 @@ public class TypingTrainer : MonoBehaviour
         wordText.transform.localPosition = originalPosition;
     }
 
-    // Сброс слова
+    // Reset the word
     void ResetWord()
     {
         currentInput = "";
         isWrong = true;
         wordText.color = Color.red;
-        StartCoroutine(ShakeWord()); // Тряска слова при сбросе
-        Invoke("ResetColor", 1f); // Сброс цвета через 1 секунду
+        StartCoroutine(ShakeWord()); // Shake the word on reset
+        Invoke("ResetColor", 1f); // Reset color after 1 second
     }
 
-    // Восстановление исходного состояния слова
+    // Restore the original state of the word
     void ResetColor()
     {
         isWrong = false;
         DisplayWord();
     }
 
-    // Корутина для удаления слова после ввода
+    // Coroutine to remove the word after typing
     IEnumerator RemoveWordAfterDelay()
     {
-        yield return new WaitForSeconds(delayBeforeNextWord); // Задержка перед исчезновением
+        yield return new WaitForSeconds(delayBeforeNextWord); // Delay before disappearing
         wordText.text = "";
-        SetNextWord(); // Переход к следующему слову
+        SetNextWord(); // Move to the next word
     }
 
-    // Автоматическая настройка размера панели в зависимости от длины слова
+    // Display the victory message and stop the game
+    void DisplayVictoryMessage()
+    {
+        victoryMessage.SetActive(true); // Show victory message
+        SetPause(true); // Pause the game
+        word.SetActive(false); // Hide the word panel
+    }
+
+    // Automatic panel size adjustment based on word length
     void AdjustPanelSize()
     {
         Vector2 newSize = new Vector2(wordText.preferredWidth + 20, wordText.preferredHeight + 20);
         wordPanel.sizeDelta = newSize;
     }
+
     public void SetPause(bool isPaused)
     {
         if (isPaused)
@@ -210,5 +222,4 @@ public class TypingTrainer : MonoBehaviour
             Time.timeScale = 1f; // Resumes the game
         }
     }
-
 }

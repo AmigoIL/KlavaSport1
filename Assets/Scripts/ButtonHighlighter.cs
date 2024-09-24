@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -14,9 +13,10 @@ public class ButtonHighlighter : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
     private void Start()
     {
-        // Сохраняем начальный размер полоски
+        // Проверяем, что highlightBar назначен
         if (highlightBar != null)
         {
+            // Сохраняем начальный размер полоски
             originalSize = highlightBar.sizeDelta;
             highlightBar.sizeDelta = new Vector2(0, originalSize.y); // Устанавливаем ширину 0
         }
@@ -53,10 +53,11 @@ public class ButtonHighlighter : MonoBehaviour, IPointerEnterHandler, IPointerEx
         Vector2 startSize = highlightBar.sizeDelta;
         Vector2 targetSize = new Vector2(targetWidth, originalSize.y);
 
+        // Используем Time.unscaledDeltaTime для анимации во время паузы
         while (elapsedTime < animationDuration)
         {
             highlightBar.sizeDelta = Vector2.Lerp(startSize, targetSize, elapsedTime / animationDuration);
-            elapsedTime += Time.deltaTime;
+            elapsedTime += Time.unscaledDeltaTime; // Используем unscaledDeltaTime, чтобы анимация не зависела от Time.timeScale
             yield return null;
         }
 
