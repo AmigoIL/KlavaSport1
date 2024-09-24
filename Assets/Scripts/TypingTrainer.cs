@@ -1,52 +1,60 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
-
+using UnityEngine.UI;
+using System;
+using Random=UnityEngine.Random;
 public class TypingTrainer : MonoBehaviour
 {
-    public TextMeshProUGUI wordText; // Объект для отображения слова
-    public RectTransform wordPanel; // Панель для автоматического увеличения
-    public string[] wordsToType; // Массив слов для последовательности
-    public float delayBeforeNextWord = 1.5f; // Задержка перед следующим словом
-    public float timeToTypeWord = 10f; // Время на ввод одного слова
-    private int currentWordIndex = 0; // Индекс текущего слова
-    private string currentWord; // Текущее слово для ввода
-    private string currentInput = ""; // Текущий ввод игрока
-    private bool isWrong = false; // Ошибка ввода
-    private float wordTimer; // Таймер на ввод слова
-    private bool isPaused = false; // Флаг для проверки паузы
+    public TextMeshProUGUI wordText; // РћР±СЉРµРєС‚ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃР»РѕРІР°
+    public RectTransform wordPanel; // РџР°РЅРµР»СЊ РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРіРѕ СѓРІРµР»РёС‡РµРЅРёСЏ
+    public string[] wordsToType; // РњР°СЃСЃРёРІ СЃР»РѕРІ РґР»СЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё
+    public float delayBeforeNextWord = 1.5f; // Р—Р°РґРµСЂР¶РєР° РїРµСЂРµРґ СЃР»РµРґСѓСЋС‰РёРј СЃР»РѕРІРѕРј
+    public float timeToTypeWord = 10f; // Р’СЂРµРјСЏ РЅР° РІРІРѕРґ РѕРґРЅРѕРіРѕ СЃР»РѕРІР°
+    private int currentWordIndex = 0; // РРЅРґРµРєСЃ С‚РµРєСѓС‰РµРіРѕ СЃР»РѕРІР°
+    private string currentWord; // РўРµРєСѓС‰РµРµ СЃР»РѕРІРѕ РґР»СЏ РІРІРѕРґР°
+    private string currentInput = ""; // РўРµРєСѓС‰РёР№ РІРІРѕРґ РёРіСЂРѕРєР°
+    private bool isWrong = false; // РћС€РёР±РєР° РІРІРѕРґР°
+    public TMP_Text Timer;
+    public float timeStart = 10f; //СЃРѕ СЃРєРѕР»СЊРєРё РЅР°С‡Р°С‚СЊ РѕС‚СЃС‡С‘С‚
+    private float wordTimer; // РўР°Р№РјРµСЂ РЅР° РІРІРѕРґ СЃР»РѕРІР°
+    public GameObject word;
+    public GameObject timeup;
 
     void Start()
     {
-        SetNextWord(); // Задаем первое слово
+        Timer.text = timeStart.ToString ();
+        SetNextWord(); // Р—Р°РґР°РµРј РїРµСЂРІРѕРµ СЃР»РѕРІРѕ
     }
 
     void Update()
     {
-        if (!isPaused) // Проверка на паузу
+        if (timeStart > 0){
+            timeStart -= Time.deltaTime;
+            Timer.text = Math.Round(timeStart).ToString();
+        }
+        else
         {
-            if (!isWrong)
+            word.SetActive(false);
+            timeup.SetActive(true);
+        } 
+
+       if (!isWrong)
+        {
+            wordTimer -= Time.deltaTime;
+            if (wordTimer <= 0)
             {
-                wordTimer -= Time.deltaTime;
-                if (wordTimer <= 0)
-                {
-                    ResetWord(); // Время на ввод слова истекло
-                }
-                else
-                {
-                    CheckInput();
-                }
+                ResetWord(); // Р’СЂРµРјСЏ РЅР° РІРІРѕРґ СЃР»РѕРІР° РёСЃС‚РµРєР»Рѕ
             }
+            else
+            {
+                CheckInput();
+           }
         }
     }
 
-    // Метод для установки паузы
-    public void SetPause(bool pause)
-    {
-        isPaused = pause;
-    }
-
-    // Установка следующего слова
+    // РЈСЃС‚Р°РЅРѕРІРєР° СЃР»РµРґСѓСЋС‰РµРіРѕ СЃР»РѕРІР°
     void SetNextWord()
     {
         if (currentWordIndex < wordsToType.Length)
@@ -54,25 +62,25 @@ public class TypingTrainer : MonoBehaviour
             currentWord = wordsToType[currentWordIndex];
             currentWordIndex++;
             DisplayWord();
-            wordTimer = timeToTypeWord; // Сброс таймера для нового слова
+            wordTimer = timeToTypeWord; // РЎР±СЂРѕСЃ С‚Р°Р№РјРµСЂР° РґР»СЏ РЅРѕРІРѕРіРѕ СЃР»РѕРІР°
         }
         else
         {
-            Debug.Log("Все слова введены!");
+            Debug.Log("Р’СЃРµ СЃР»РѕРІР° РІРІРµРґРµРЅС‹!");
             wordText.text = "";
         }
     }
 
-    // Отображение слова и настройка панели
+    // РћС‚РѕР±СЂР°Р¶РµРЅРёРµ СЃР»РѕРІР° Рё РЅР°СЃС‚СЂРѕР№РєР° РїР°РЅРµР»Рё
     void DisplayWord()
     {
         wordText.text = currentWord;
-        wordText.color = Color.white; // Белый цвет по умолчанию
-        currentInput = ""; // Сбрасываем текущий ввод
-        AdjustPanelSize(); // Автоматическое изменение размера панели
+        wordText.color = Color.white; // Р‘РµР»С‹Р№ С†РІРµС‚ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
+        currentInput = ""; // РЎР±СЂР°СЃС‹РІР°РµРј С‚РµРєСѓС‰РёР№ РІРІРѕРґ
+        AdjustPanelSize(); // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРµ РёР·РјРµРЅРµРЅРёРµ СЂР°Р·РјРµСЂР° РїР°РЅРµР»Рё
     }
 
-    // Проверка ввода
+    // РџСЂРѕРІРµСЂРєР° РІРІРѕРґР°
     void CheckInput()
     {
         foreach (char c in Input.inputString)
@@ -81,18 +89,18 @@ public class TypingTrainer : MonoBehaviour
             {
                 currentInput += c;
                 UpdateWordDisplay();
-                AnimateLetter(currentInput.Length - 1); // Увеличиваем только текущую букву
+                AnimateLetter(currentInput.Length - 1); // РЈРІРµР»РёС‡РёРІР°РµРј С‚РѕР»СЊРєРѕ С‚РµРєСѓС‰СѓСЋ Р±СѓРєРІСѓ
             }
             else
             {
-                StartCoroutine(ShakeWord()); // Ошибка — трясем слово
+                StartCoroutine(ShakeWord()); // РћС€РёР±РєР° вЂ” С‚СЂСЏСЃРµРј СЃР»РѕРІРѕ
                 ResetWord();
                 return;
             }
         }
     }
 
-    // Обновление отображения слова
+    // РћР±РЅРѕРІР»РµРЅРёРµ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃР»РѕРІР°
     void UpdateWordDisplay()
     {
         string newText = "";
@@ -100,7 +108,7 @@ public class TypingTrainer : MonoBehaviour
         {
             if (i < currentInput.Length)
             {
-                newText += $"<color=#80C080>{currentWord[i]}</color>"; // Менее яркий зеленый цвет
+                newText += $"<color=#80C080>{currentWord[i]}</color>"; // РњРµРЅРµРµ СЏСЂРєРёР№ Р·РµР»РµРЅС‹Р№ С†РІРµС‚
             }
             else
             {
@@ -109,21 +117,21 @@ public class TypingTrainer : MonoBehaviour
         }
         wordText.text = newText;
 
-        // Если слово полностью введено
+        // Р•СЃР»Рё СЃР»РѕРІРѕ РїРѕР»РЅРѕСЃС‚СЊСЋ РІРІРµРґРµРЅРѕ
         if (currentInput == currentWord)
         {
-            StartCoroutine(ShakeWord()); // Успешное завершение — трясем слово
+            StartCoroutine(ShakeWord()); // РЈСЃРїРµС€РЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ вЂ” С‚СЂСЏСЃРµРј СЃР»РѕРІРѕ
             StartCoroutine(RemoveWordAfterDelay());
         }
     }
 
-    // Анимация увеличения только текущей буквы
+    // РђРЅРёРјР°С†РёСЏ СѓРІРµР»РёС‡РµРЅРёСЏ С‚РѕР»СЊРєРѕ С‚РµРєСѓС‰РµР№ Р±СѓРєРІС‹
     void AnimateLetter(int index)
     {
         StartCoroutine(ShakeLetter(index));
     }
 
-    // Корутина для увеличения и уменьшения конкретной буквы
+    // РљРѕСЂСѓС‚РёРЅР° РґР»СЏ СѓРІРµР»РёС‡РµРЅРёСЏ Рё СѓРјРµРЅСЊС€РµРЅРёСЏ РєРѕРЅРєСЂРµС‚РЅРѕР№ Р±СѓРєРІС‹
     IEnumerator ShakeLetter(int index)
     {
         string newText = "";
@@ -147,7 +155,7 @@ public class TypingTrainer : MonoBehaviour
         UpdateWordDisplay();
     }
 
-    // Корутина для тряски всего слова
+    // РљРѕСЂСѓС‚РёРЅР° РґР»СЏ С‚СЂСЏСЃРєРё РІСЃРµРіРѕ СЃР»РѕРІР°
     IEnumerator ShakeWord()
     {
         Vector3 originalPosition = wordText.transform.localPosition;
@@ -160,32 +168,32 @@ public class TypingTrainer : MonoBehaviour
         wordText.transform.localPosition = originalPosition;
     }
 
-    // Сброс слова
+    // РЎР±СЂРѕСЃ СЃР»РѕРІР°
     void ResetWord()
     {
         currentInput = "";
         isWrong = true;
         wordText.color = Color.red;
-        StartCoroutine(ShakeWord()); // Тряска слова при сбросе
-        Invoke("ResetColor", 1f); // Сброс цвета через 1 секунду
+        StartCoroutine(ShakeWord()); // РўСЂСЏСЃРєР° СЃР»РѕРІР° РїСЂРё СЃР±СЂРѕСЃРµ
+        Invoke("ResetColor", 1f); // РЎР±СЂРѕСЃ С†РІРµС‚Р° С‡РµСЂРµР· 1 СЃРµРєСѓРЅРґСѓ
     }
 
-    // Восстановление исходного состояния слова
+    // Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ РёСЃС…РѕРґРЅРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ СЃР»РѕРІР°
     void ResetColor()
     {
         isWrong = false;
         DisplayWord();
     }
 
-    // Корутина для удаления слова после ввода
+    // РљРѕСЂСѓС‚РёРЅР° РґР»СЏ СѓРґР°Р»РµРЅРёСЏ СЃР»РѕРІР° РїРѕСЃР»Рµ РІРІРѕРґР°
     IEnumerator RemoveWordAfterDelay()
     {
-        yield return new WaitForSeconds(delayBeforeNextWord); // Задержка перед исчезновением
+        yield return new WaitForSeconds(delayBeforeNextWord); // Р—Р°РґРµСЂР¶РєР° РїРµСЂРµРґ РёСЃС‡РµР·РЅРѕРІРµРЅРёРµРј
         wordText.text = "";
-        SetNextWord(); // Переход к следующему слову
+        SetNextWord(); // РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµРјСѓ СЃР»РѕРІСѓ
     }
 
-    // Автоматическая настройка размера панели в зависимости от длины слова
+    // РђРІС‚РѕРјР°С‚РёС‡РµСЃРєР°СЏ РЅР°СЃС‚СЂРѕР№РєР° СЂР°Р·РјРµСЂР° РїР°РЅРµР»Рё РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РґР»РёРЅС‹ СЃР»РѕРІР°
     void AdjustPanelSize()
     {
         Vector2 newSize = new Vector2(wordText.preferredWidth + 20, wordText.preferredHeight + 20);
