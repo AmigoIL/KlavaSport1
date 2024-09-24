@@ -199,4 +199,16 @@ public class TypingTrainer : MonoBehaviour
         Vector2 newSize = new Vector2(wordText.preferredWidth + 20, wordText.preferredHeight + 20);
         wordPanel.sizeDelta = newSize;
     }
+    public void SetPause(bool isPaused)
+    {
+        if (isPaused)
+        {
+            Time.timeScale = 0f; // Pauses the game
+        }
+        else
+        {
+            Time.timeScale = 1f; // Resumes the game
+        }
+    }
+
 }
