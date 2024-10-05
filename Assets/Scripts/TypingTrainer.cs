@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.IO;
 using System;
 using Random = UnityEngine.Random;
 
@@ -10,40 +11,45 @@ public class TypingTrainer : MonoBehaviour
 {
     public TextMeshProUGUI wordText; // Object to display the word
     public RectTransform wordPanel; // Panel for automatic resizing
-    public string[] wordsToType; // Array of words for the sequence
     public float delayBeforeNextWord = 1.5f; // Delay before the next word
     public float timeToTypeWord = 10f; // Time to type one word
+    private List<string> wordsToType; // List of words for the sequence
     private int currentWordIndex = 0; // Index of the current word
     private string currentWord; // Current word to type
     private string currentInput = ""; // Current player input
     private bool isWrong = false; // Input error
     public TMP_Text Timer;
-    public float timeStart = 10f; // Time to start the countdown
+    public float initialTimeStart = 10f; // Initial time value
+    private float timeStart; // Current time variable
     private float wordTimer; // Timer for typing the word
     public GameObject word;
     public GameObject timeup;
     public GameObject victoryMessage; // UI object for the victory message
+    public Button restartButton; // Button for restarting the game
+
 
     void Start()
     {
+        timeStart = initialTimeStart; // Set the starting time
         Timer.text = timeStart.ToString();
+        LoadWordsFromFile(); // Load words from the external file
         SetNextWord(); // Set the first word
         victoryMessage.SetActive(false); // Ensure victory message is hidden at start
+        restartButton.gameObject.SetActive(false); // Hide restart button at the start
+        restartButton.onClick.AddListener(RestartGame); // Add listener to the button
     }
 
     void Update()
     {
         if (timeStart > 0)
         {
-            timeStart -= Time.deltaTime;
-            Timer.text = Math.Round(timeStart).ToString();
+            timeStart -= Time.deltaTime; // Decrease current time
+            Timer.text = Math.Round(timeStart).ToString(); // Update timer text
         }
         else
         {
-            word.SetActive(false);
-            timeup.SetActive(true);
+            GameOver(); // Game over when the time runs out
         }
-
         if (!isWrong)
         {
             wordTimer -= Time.deltaTime;
@@ -58,18 +64,38 @@ public class TypingTrainer : MonoBehaviour
         }
     }
 
-    // Set the next word
+    // Load words from an external file
+    void LoadWordsFromFile()
+    {
+        wordsToType = new List<string>(); // Initialize the list
+
+        string filePath = Path.Combine(Application.streamingAssetsPath, "words.txt"); // Set the file path
+
+        if (File.Exists(filePath))
+        {
+            string[] lines = File.ReadAllLines(filePath); // Read all lines from the file
+            wordsToType.AddRange(lines); // Add lines to the list
+        }
+        else
+        {
+            Debug.LogError("File not found: " + filePath);
+        }
+    }
+
+    // Set the next word randomly
     void SetNextWord()
     {
-        if (currentWordIndex < wordsToType.Length)
+        if (wordsToType.Count > 0)
         {
-            currentWord = wordsToType[currentWordIndex];
-            currentWordIndex++;
+            currentWordIndex = Random.Range(0, wordsToType.Count); // Randomly select an index
+            currentWord = wordsToType[currentWordIndex]; // Get the word from the list
+            wordsToType.RemoveAt(currentWordIndex); // Remove it to avoid repetition
             DisplayWord();
             wordTimer = timeToTypeWord; // Reset timer for the new word
         }
         else
         {
+            // If there are no words left, show victory message
             DisplayVictoryMessage(); // Display victory message if all words are typed
         }
     }
@@ -193,7 +219,16 @@ public class TypingTrainer : MonoBehaviour
     {
         yield return new WaitForSeconds(delayBeforeNextWord); // Delay before disappearing
         wordText.text = "";
-        SetNextWord(); // Move to the next word
+
+        // Check if any words are left, if not, show victory
+        if (wordsToType.Count <= 0)
+        {
+            DisplayVictoryMessage(); // Victory, all words typed
+        }
+        else
+        {
+            SetNextWord(); // Move to the next word
+        }
     }
 
     // Display the victory message and stop the game
@@ -202,6 +237,28 @@ public class TypingTrainer : MonoBehaviour
         victoryMessage.SetActive(true); // Show victory message
         SetPause(true); // Pause the game
         word.SetActive(false); // Hide the word panel
+    }
+
+    // Show game over state
+    void GameOver()
+    {
+        word.SetActive(false); // Hide the word panel
+        timeup.SetActive(true); // Show the time-up message
+        restartButton.gameObject.SetActive(true); // Show the restart button
+    }
+
+    // Restart the game
+    void RestartGame()
+    {
+        timeStart = initialTimeStart; // Reset current time to initial value
+        isWrong = false;
+        restartButton.gameObject.SetActive(false); // Hide the restart button
+        timeup.SetActive(false); // Hide time-up message
+        victoryMessage.SetActive(false); // Hide victory message
+        word.SetActive(true); // Show the word panel
+        LoadWordsFromFile(); // Reload words from file
+        SetNextWord(); // Start the first word again
+        SetPause(false); // Unpause the game
     }
 
     // Automatic panel size adjustment based on word length
@@ -213,13 +270,6 @@ public class TypingTrainer : MonoBehaviour
 
     public void SetPause(bool isPaused)
     {
-        if (isPaused)
-        {
-            Time.timeScale = 0f; // Pauses the game
-        }
-        else
-        {
-            Time.timeScale = 1f; // Resumes the game
-        }
+        Time.timeScale = isPaused ? 0f : 1f; // Pauses or resumes the game
     }
 }
