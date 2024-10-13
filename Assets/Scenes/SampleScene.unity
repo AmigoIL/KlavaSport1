@@ -5281,9 +5281,9 @@ MonoBehaviour:
   wordText: {fileID: 1676452408}
   wordPanel: {fileID: 798202562}
   delayBeforeNextWord: 0
-  timeToTypeWord: 300
+  timeToTypeWord: 800
   Timer: {fileID: 1437108368}
-  initialTimeStart: 300
+  initialTimeStart: 800
   word: {fileID: 1676452406}
   timeup: {fileID: 802113253}
   victoryMessage: {fileID: 989865701}
